@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Green Marinasi — Monitoring Omzet & Kurir</title>
+<meta name="theme-color" content="#14532d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="logo">GM</span><div><b>Green Marinasi</b><small>Monitoring & Kurir</small></div></div>
+    <nav class="nav" id="nav-side" aria-label="Menu utama"></nav>
+    <p class="foot">Data tersimpan di browser perangkat ini.</p>
+  </aside>
+
+  <main>
+    <!-- 1. BERANDA / DASHBOARD -->
+    <section class="view" id="v-dashboard">
+      <header class="ph"><div><h1>Beranda</h1><p class="mut" id="d-date"></p></div></header>
+      
+      <!-- HERO PENJUALAN GREEN MARINASI -->
+      <div class="card hero" id="d-hero"></div>
+      
+      <h2 class="sh" style="margin-top:0">A. Penjualan Green Marinasi (Omzet & Target)</h2>
+      <div class="grid kpis" id="d-kpis"></div>
+      
+      <div class="card">
+        <div class="ch"><h2>Tren omzet Green Marinasi</h2>
+          <div class="seg" id="d-seg"><button data-r="7" class="on">7 hari</button><button data-r="30">30 hari</button><button data-r="m">Bulanan</button></div></div>
+        <div class="cv"><canvas id="c-dash"></canvas></div>
+      </div>
+      
+      <h2 class="sh">B. Hak Kurir & Rekap Pengantaran Hari Ini</h2>
+      <div class="grid kpis" id="d-courier-kpis"></div>
+      
+      <h2 class="sh">C. Ringkasan Tambahan & Pembayaran Pelanggan</h2>
+      <div class="grid kpis" id="d-extra"></div>
+    </section>
+
+    <!-- 2. CATAT OMZET MAKANAN GREEN MARINASI -->
+    <section class="view" id="v-sales">
+      <header class="ph"><div><h1>Catat Omzet</h1><p class="mut">Satu tanggal, satu catatan omzet belanja makanan.</p></div></header>
+      <div class="two">
+        <form class="card" id="sales-form" novalidate>
+          <h2 id="sf-title">Tambah data</h2>
+          <label>Tanggal<input type="date" name="date" required></label>
+          <label>Total omzet makanan (Rp)<input type="number" name="omzet" inputmode="numeric" min="0" step="1" placeholder="contoh: 4500000" required></label>
+          <p class="live" id="sf-live"></p>
+          <label>Catatan (opsional)<input type="text" name="note" maxlength="120" autocomplete="off"></label>
+          <div class="row"><button class="btn" type="submit">Simpan omzet</button><button class="btn ghost" type="button" id="sf-cancel" hidden>Batal edit</button></div>
+          <p class="hint"><b>PENTING:</b> Omzet adalah total penjualan makanan Green Marinasi. Ongkir kurir BUKAN omzet dan tidak dicatat di sini.</p>
+        </form>
+        <div class="card"><h2>Riwayat omzet makanan</h2><div class="tw"><table id="sales-table"></table></div></div>
+      </div>
+    </section>
+
+    <!-- 3. PENGANTARAN & PENGHASILAN KURIR -->
+    <section class="view" id="v-courier">
+      <header class="ph">
+        <div>
+          <h1>Pengantaran & Rekap Penghasilan Kurir</h1>
+          <p class="mut">Seluruh ongkir pengantaran berhasil menjadi hak kurir sepenuhnya.</p>
+        </div>
+        <button class="btn ghost" id="btn-courier-base">Atur Gaji Pokok Kurir</button>
+      </header>
+
+      <!-- KPI Hak Kurir -->
+      <div class="grid kpis" id="c-kpis"></div>
+
+      <!-- FILTER KURIR -->
+      <div class="card ctl">
+        <label>Periode
+          <select id="cf-period">
+            <option value="day">Harian</option>
+            <option value="week">Mingguan</option>
+            <option value="month">Bulanan</option>
+            <option value="range">Rentang Tanggal</option>
+          </select>
+        </label>
+        <label id="cf-dl">Tanggal<input type="date" id="cf-date"></label>
+        <label id="cf-fl" hidden>Dari<input type="date" id="cf-from"></label>
+        <label id="cf-tl" hidden>Sampai<input type="date" id="cf-to"></label>
+        <label>Kurir<select id="cf-courier"><option value="all">Semua Kurir</option></select></label>
+        <label>Status Pengantaran
+          <select id="cf-status">
+            <option value="all">Semua Status</option>
+            <option value="berhasil">Berhasil (Hak Kurir)</option>
+            <option value="menunggu">Menunggu</option>
+            <option value="dalam_perjalanan">Dalam Perjalanan</option>
+            <option value="gagal">Gagal (Tidak Dihitung)</option>
+            <option value="dibatalkan">Dibatalkan (Tidak Dihitung)</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- REKAP PENGHASILAN PER KURIR -->
+      <div class="card">
+        <div class="ch"><h2>Rekap Penghasilan Kurir</h2></div>
+        <div class="tw"><table id="courier-summary-table"></table></div>
+      </div>
+
+      <!-- FORM CATAT PENGANTARAN & DAFTAR PESANAN -->
+      <div class="two" style="margin-top:16px">
+        <form class="card" id="order-form" novalidate>
+          <h2 id="of-title">Catat Pengantaran</h2>
+          <label>Nomor Pesanan<input type="text" name="orderNo" placeholder="contoh: GM001" autocomplete="off" required></label>
+          <label>Tanggal<input type="date" name="date" required></label>
+          <label>Belanja Makanan (Rp)<input type="number" name="foodAmount" inputmode="numeric" min="0" step="1" placeholder="contoh: 50000"></label>
+          <label>Ongkir Hak Kurir (Rp)<input type="number" name="ongkir" inputmode="numeric" min="0" step="1" placeholder="contoh: 5000" required></label>
+          <label>Kurir Pengantar<select name="courierName" id="of-courier" required></select></label>
+          <label>Status Pengantaran
+            <select name="status">
+              <option value="berhasil">Berhasil (Ongkir dihitung)</option>
+              <option value="dalam_perjalanan">Dalam Perjalanan</option>
+              <option value="menunggu">Menunggu</option>
+              <option value="gagal">Gagal (Ongkir tidak dihitung)</option>
+              <option value="dibatalkan">Dibatalkan (Ongkir tidak dihitung)</option>
+            </select>
+          </label>
+          <label>Catatan (opsional)<input type="text" name="note" maxlength="120" autocomplete="off"></label>
+          <div class="row">
+            <button class="btn" type="submit">Simpan Pesanan</button>
+            <button class="btn ghost" type="button" id="of-cancel" hidden>Batal edit</button>
+          </div>
+          <p class="hint">Ongkir hanya dihitung menjadi hak kurir jika statusnya <b>Berhasil</b>.</p>
+        </form>
+
+        <div class="card">
+          <h2>Riwayat Pengantaran</h2>
+          <div class="tw"><table id="order-table"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. UPAH HARIAN KARYAWAN NON-KURIR (DAPUR, PACKING, ADMIN) -->
+    <section class="view" id="v-wage">
+      <header class="ph"><div><h1>Upah Harian</h1><p class="mut">Estimasi upah karyawan non-kurir dari omzet belanja makanan dan kelompoknya.</p></div>
+        <label class="dt">Tanggal<input type="date" id="w-date"></label></header>
+      <div class="grid kpis3" id="w-sum"></div>
+      <div id="w-banner"></div>
+      <div class="card"><div class="ch"><h2>Rincian upah karyawan</h2><button class="btn" id="w-act" hidden></button></div><div class="tw"><table id="w-table"></table></div></div>
+      <div class="card gap"><h2>Riwayat upah terkunci</h2><div class="tw" id="w-hist"></div></div>
+    </section>
+
+    <!-- 5. KARYAWAN -->
+    <section class="view" id="v-employees">
+      <header class="ph"><div><h1>Karyawan</h1><p class="mut" id="emp-sum"></p></div></header>
+      <div class="two">
+        <form class="card" id="emp-form" novalidate>
+          <h2 id="ef-title">Tambah karyawan</h2>
+          <label>Nama<input name="nama" maxlength="60" autocomplete="off" required></label>
+          <label>Bagian<input name="role" list="roles" maxlength="40" autocomplete="off" required>
+            <datalist id="roles"><option value="Dapur"><option value="Packing"><option value="Kurir"><option value="Admin Media Sosial"></datalist></label>
+          <label>Kelompok upah<select name="group"><option>A</option><option>B</option><option>C</option></select></label>
+          <label class="chk"><input type="checkbox" name="active" checked>Karyawan aktif</label>
+          <div class="row"><button class="btn" type="submit">Simpan karyawan</button><button class="btn ghost" type="button" id="ef-cancel" hidden>Batal edit</button></div>
+          <p class="hint">Kurir mendapatkan penghasilan dari akumulasi ongkir pengantaran di menu <b>Kurir</b>. Kelompok upah A/B/C berlaku untuk karyawan non-kurir.</p>
+        </form>
+        <div class="card"><h2>Daftar karyawan</h2><div class="tw"><table id="emp-table"></table></div></div>
+      </div>
+    </section>
+
+    <!-- 6. LAPORAN & CADANGAN DATA -->
+    <section class="view" id="v-reports">
+      <header class="ph"><div><h1>Laporan</h1><p class="mut" id="r-range"></p></div><button class="btn" id="r-csv"></button></header>
+      <div class="card ctl">
+        <label>Jenis laporan<select id="r-type"><option value="day">Harian</option><option value="week">Mingguan</option><option value="month">Bulanan</option><option value="range">Rentang tanggal</option></select></label>
+        <label id="r-dl">Tanggal<input type="date" id="r-date"></label>
+        <label id="r-fl" hidden>Dari<input type="date" id="r-from"></label>
+        <label id="r-tl" hidden>Sampai<input type="date" id="r-to"></label>
+      </div>
+      <div class="grid kpis" id="r-kpis"></div>
+      <div class="card"><h2>Tren penjualan (omzet makanan)</h2><div class="cv"><canvas id="c-rep"></canvas></div></div>
+      <div class="card gap"><h2>Rincian per hari</h2><div class="tw"><table id="r-table"></table></div></div>
+      <div class="card gap"><h2>Cadangan data</h2>
+        <p class="mut">Simpan seluruh data (omzet, pesanan kurir, upah terkunci, karyawan) ke file JSON, atau pulihkan dari file cadangan.</p>
+        <div class="row"><button id="b-export" class="btn ghost"></button><label class="btn ghost" for="b-import" id="b-imp-l"></label><input type="file" id="b-import" accept=".json,application/json" hidden></div>
+        <p class="hint">Data laptop dan HP tidak tersinkronisasi otomatis. Pindahkan data lewat file cadangan.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom" id="nav-bottom" aria-label="Menu utama"></nav>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/vendor/chart.umd.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';document.head.appendChild(s)"></script>
+<script src="js/storage.js"></script>
+<script src="js/salary.js"></script>
+<script src="js/courier.js"></script>
+<script src="js/courier-ui.js"></script>
+<script src="js/sales.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
