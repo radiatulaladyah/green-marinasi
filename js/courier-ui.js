@@ -55,7 +55,6 @@ const CourierUI = {
 
   getCourierNames() {
     const db = Store.get();
-    // Ambil dari daftar karyawan dengan role Kurir, atau dari pesanan yang ada
     const fromEmp = db.employees.filter(e => (e.role || '').toLowerCase().includes('kurir')).map(e => e.name.trim());
     const fromOrd = db.orders.map(o => (o.courierName || '').trim()).filter(Boolean);
     const set = new Set([...fromEmp, ...fromOrd, 'Kurir A', 'Kurir B']);
@@ -97,7 +96,7 @@ const CourierUI = {
     f.note.value = o.note || '';
     $('of-title').textContent = 'Edit Pengantaran ' + (o.orderNo || '');
     $('of-cancel').hidden = false;
-    f.scrollIntoView({ behavior: 'smooth' });
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
   removeOrder(id) {
@@ -239,13 +238,23 @@ const CourierUI = {
         (db.settings.courierBaseSalary ? '<th class="n">Gaji Pokok</th>' : '') +
         '<th class="n">Total Penghasilan</th></tr></thead><tbody>' +
         summary.couriers.map(c => `
-          <tr>
-            <td><b>${U.esc(c.courierName)}</b></td>
-            <td class="n"><span class="chip s3">${c.deliveredCount} pesanan</span></td>
-            <td class="n">${c.failedCount ? `<span class="chip s1">${c.failedCount}</span>` : '0'}</td>
-            <td class="n"><b>${U.rp(c.totalOngkir)}</b></td>
-            ${db.settings.courierBaseSalary ? `<td class="n">${U.rp(c.baseSalary)}</td>` : ''}
-            <td class="n" style="color:var(--g800);font-weight:700">${U.rp(c.totalIncome)}</td>
+          <tr class="res-row">
+            <td data-label="Nama Kurir">
+              <span class="m-val"><b>${U.esc(c.courierName)}</b></span>
+            </td>
+            <td class="n" data-label="Berhasil Diantar">
+              <span class="m-val"><span class="chip s3">${c.deliveredCount} pesanan</span></span>
+            </td>
+            <td class="n" data-label="Gagal / Batal">
+              <span class="m-val">${c.failedCount ? `<span class="chip s1">${c.failedCount}</span>` : '<span class="mut">0</span>'}</span>
+            </td>
+            <td class="n" data-label="Total Ongkir">
+              <span class="m-val" style="font-weight:700">${U.rp(c.totalOngkir)}</span>
+            </td>
+            ${db.settings.courierBaseSalary ? `<td class="n" data-label="Gaji Pokok"><span class="m-val">${U.rp(c.baseSalary)}</span></td>` : ''}
+            <td class="n" data-label="Total Penghasilan">
+              <span class="m-val" style="color:var(--g800);font-weight:800;font-size:1.05em">${U.rp(c.totalIncome)}</span>
+            </td>
           </tr>
         `).join('') +
         `</tbody><tfoot><tr>
@@ -263,7 +272,7 @@ const CourierUI = {
     if (!filtered.length) {
       ot.innerHTML = '<tbody><tr><td class="empty">Tidak ada data pesanan pada filter ini.</td></tr></tbody>';
     } else {
-      ot.innerHTML = '<thead><tr><th>Pesanan</th><th>Tanggal</th><th>Kurir</th><th class="n">Belanja Makanan</th><th class="n">Ongkir Kurir</th><th>Status Pengantaran</th><th>Catatan & Riwayat</th><th></th></tr></thead><tbody>' +
+      ot.innerHTML = '<thead><tr><th>Pesanan</th><th>Tanggal</th><th>Kurir</th><th class="n">Belanja Makanan</th><th class="n">Ongkir Kurir</th><th>Status</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>' +
         filtered.map(o => {
           const statusClass = {
             berhasil: 's3',
@@ -274,29 +283,43 @@ const CourierUI = {
           }[o.status] || 'off';
 
           const histTip = (o.history && o.history.length > 1)
-            ? `<div class="s" title="Riwayat perubahan status">Riwayat: ${o.history.map(h => (h.from ? Courier.STATUS_LABELS[h.from] : 'Awal') + ' → ' + Courier.STATUS_LABELS[h.to]).join(', ')}</div>`
+            ? `<div class="s" style="font-size:0.75rem;margin-top:4px" title="Riwayat perubahan status">Riwayat: ${o.history.map(h => (h.from ? Courier.STATUS_LABELS[h.from] : 'Awal') + ' → ' + Courier.STATUS_LABELS[h.to]).join(', ')}</div>`
             : '';
 
           return `
-            <tr>
-              <td><b>${U.esc(o.orderNo || '—')}</b></td>
-              <td>${U.dmy(o.date)}</td>
-              <td>${U.esc(o.courierName)}</td>
-              <td class="n">${U.rp(o.foodAmount || 0)}</td>
-              <td class="n"><b>${U.rp(o.ongkir || 0)}</b></td>
-              <td>
-                <select data-act="status" data-id="${o.id}" class="chip ${statusClass}" style="border:1px solid #cdd8d1;min-height:36px;padding:4px 8px;font-weight:700">
-                  <option value="berhasil"${o.status === 'berhasil' ? ' selected' : ''}>Berhasil</option>
-                  <option value="menunggu"${o.status === 'menunggu' ? ' selected' : ''}>Menunggu</option>
-                  <option value="dalam_perjalanan"${o.status === 'dalam_perjalanan' ? ' selected' : ''}>Dalam Perjalanan</option>
-                  <option value="gagal"${o.status === 'gagal' ? ' selected' : ''}>Gagal</option>
-                  <option value="dibatalkan"${o.status === 'dibatalkan' ? ' selected' : ''}>Dibatalkan</option>
-                </select>
+            <tr class="res-row">
+              <td data-label="Nomor Pesanan">
+                <span class="m-val"><b>${U.esc(o.orderNo || '—')}</b></span>
               </td>
-              <td>${U.esc(o.note || '')}${histTip}</td>
-              <td>
+              <td data-label="Tanggal">
+                <span class="m-val">${U.dmy(o.date)}</span>
+              </td>
+              <td data-label="Kurir">
+                <span class="m-val"><span class="chip s2">${U.esc(o.courierName)}</span></span>
+              </td>
+              <td class="n" data-label="Belanja Makanan">
+                <span class="m-val">${U.rp(o.foodAmount || 0)}</span>
+              </td>
+              <td class="n" data-label="Ongkir Kurir">
+                <span class="m-val" style="color:var(--g800);font-weight:800">${U.rp(o.ongkir || 0)}</span>
+              </td>
+              <td data-label="Status Pengantaran">
+                <span class="m-val">
+                  <select data-act="status" data-id="${o.id}" class="chip ${statusClass}" style="border:1px solid #cdd8d1;min-height:36px;padding:4px 8px;font-weight:700">
+                    <option value="berhasil"${o.status === 'berhasil' ? ' selected' : ''}>Berhasil</option>
+                    <option value="menunggu"${o.status === 'menunggu' ? ' selected' : ''}>Menunggu</option>
+                    <option value="dalam_perjalanan"${o.status === 'dalam_perjalanan' ? ' selected' : ''}>Dalam Perjalanan</option>
+                    <option value="gagal"${o.status === 'gagal' ? ' selected' : ''}>Gagal</option>
+                    <option value="dibatalkan"${o.status === 'dibatalkan' ? ' selected' : ''}>Dibatalkan</option>
+                  </select>
+                </span>
+              </td>
+              <td data-label="Catatan & Riwayat">
+                <span class="m-val">${o.note ? U.esc(o.note) : '<span class="mut">—</span>'}${histTip}</span>
+              </td>
+              <td data-label="Aksi">
                 <div class="acts">
-                  <button class="btn ghost sm" data-act="edit" data-id="${o.id}" aria-label="Edit">${U.icon('edit')}</button>
+                  <button class="btn ghost sm" data-act="edit" data-id="${o.id}" aria-label="Edit">${U.icon('edit')} Edit</button>
                   <button class="btn ghost sm del" data-act="del" data-id="${o.id}" aria-label="Hapus">${U.icon('trash')}</button>
                 </div>
               </td>
@@ -306,4 +329,3 @@ const CourierUI = {
     }
   }
 };
-

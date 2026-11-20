@@ -150,17 +150,45 @@ const App = {
   view: 'dashboard',
   init() {
     Store.load();
-    const html = NAV.map(([k, l, i]) => `<a href="#${k}" data-v="${k}">${U.icon(i)}<span>${l}</span></a>`).join('');
-    $('nav-side').innerHTML = html; $('nav-bottom').innerHTML = html;
+    // Render Sidebar Nav
+    $('nav-side').innerHTML = NAV.map(([k, l, i]) => `
+      <a href="#${k}" data-v="${k}">
+        ${U.icon(i)}
+        <span>${l}</span>
+      </a>
+    `).join('');
+
+    // Render Bottom Nav (Mobile)
+    $('nav-bottom').innerHTML = NAV.map(([k, l, i]) => `
+      <a href="#${k}" data-v="${k}">
+        <span class="nb-icon-box">${U.icon(i)}</span>
+        <span>${l}</span>
+      </a>
+    `).join('');
+
     Sales.init(); CourierUI.init(); Employees.init(); Wage.init(); Reports.init(); Backup.init(); Dash.init();
     addEventListener('hashchange', () => this.route()); this.route();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   },
   route() {
-    const k = location.hash.slice(1); this.view = NAV.some(n => n[0] === k) ? k : 'dashboard';
+    const k = location.hash.slice(1);
+    this.view = NAV.some(n => n[0] === k) ? k : 'dashboard';
+    
+    // Aktifkan view
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'v-' + this.view));
+    
+    // Tandai tombol menu aktif
     document.querySelectorAll('[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === this.view));
-    this.refresh(); scrollTo(0, 0);
+
+    // Update label tag pada mobile top bar jika ada
+    const activeItem = NAV.find(n => n[0] === this.view);
+    const tagEl = $('mobile-view-tag');
+    if (tagEl && activeItem) {
+      tagEl.textContent = activeItem[1];
+    }
+
+    this.refresh();
+    scrollTo(0, 0);
   },
   refresh() {
     ({

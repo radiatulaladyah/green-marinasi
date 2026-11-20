@@ -41,7 +41,8 @@ const Employees = {
   edit(x) {
     const f = $('emp-form'); this.editing = x.id;
     f.nama.value = x.name; f.role.value = x.role; f.group.value = x.group; f.active.checked = x.active;
-    $('ef-title').textContent = 'Edit karyawan'; $('ef-cancel').hidden = false; scrollTo({ top: 0, behavior: 'smooth' });
+    $('ef-title').textContent = 'Edit karyawan'; $('ef-cancel').hidden = false;
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
   render() {
@@ -66,16 +67,47 @@ const Employees = {
     const nonCourierActive = act.filter(e => !(e.role || '').toLowerCase().includes('kurir'));
     const totalWage = s ? U.rp(Salary.total(Salary.rows(nonCourierActive, s.omzet, T))) : '—';
 
-    if (!list.length) { $('emp-table').innerHTML = '<tbody><tr><td class="empty">Belum ada karyawan. Tambahkan lewat form.</td></tr></tbody>'; return; }
-    $('emp-table').innerHTML = '<thead><tr><th>Nama</th><th>Bagian</th><th>Kelompok</th><th>Status</th><th class="n">Penghasilan / Estimasi Hari ini</th><th></th></tr></thead><tbody>' +
+    if (!list.length) {
+      $('emp-table').innerHTML = '<tbody><tr><td class="empty">Belum ada karyawan. Tambahkan lewat form.</td></tr></tbody>';
+      return;
+    }
+
+    $('emp-table').innerHTML = '<thead><tr><th>Nama</th><th>Bagian</th><th>Kelompok</th><th>Status</th><th class="n">Penghasilan Hari ini</th><th>Aksi</th></tr></thead><tbody>' +
       list.map(e => {
         const isCourier = (e.role || '').toLowerCase().includes('kurir');
-        return `<tr><td>${U.esc(e.name)}</td><td>${U.esc(e.role)}</td>
-        <td>${isCourier ? '<span class="mut">Ongkir</span>' : `<select data-act="grp" data-id="${e.id}" aria-label="Kelompok ${U.esc(e.name)}">${['A', 'B', 'C'].map(g => `<option${g === e.group ? ' selected' : ''}>${g}</option>`).join('')}</select>`}</td>
-        <td><button class="chip ${e.active ? 's3' : 'off'}" data-act="toggle" data-id="${e.id}">${e.active ? 'Aktif' : 'Nonaktif'}</button></td>
-        <td class="n">${est(e)}</td>
-        <td><div class="acts"><button class="btn ghost sm" data-act="edit" data-id="${e.id}" aria-label="Edit">${U.icon('edit')}</button>
-        <button class="btn ghost sm del" data-act="del" data-id="${e.id}" aria-label="Hapus">${U.icon('trash')}</button></div></td></tr>`;
+        return `
+          <tr class="res-row">
+            <td data-label="Nama">
+              <span class="m-val"><b>${U.esc(e.name)}</b></span>
+            </td>
+            <td data-label="Bagian">
+              <span class="m-val"><span class="chip ${isCourier ? 's2' : 's3'}">${U.esc(e.role)}</span></span>
+            </td>
+            <td data-label="Kelompok Upah">
+              <span class="m-val">
+                ${isCourier
+                  ? '<span class="mut" title="Penghasilan kurir bersumber dari ongkir pengantaran">Ongkir</span>'
+                  : `<select data-act="grp" data-id="${e.id}" aria-label="Kelompok ${U.esc(e.name)}">${['A', 'B', 'C'].map(g => `<option${g === e.group ? ' selected' : ''}>${g}</option>`).join('')}</select>`}
+              </span>
+            </td>
+            <td data-label="Status Karyawan">
+              <span class="m-val">
+                <button class="chip ${e.active ? 's3' : 'off'}" data-act="toggle" data-id="${e.id}" title="Klik untuk ubah status aktif/nonaktif">
+                  ${e.active ? '● Aktif' : '○ Nonaktif'}
+                </button>
+              </span>
+            </td>
+            <td class="n" data-label="Estimasi / Hari Ini">
+              <span class="m-val" style="font-weight:700">${est(e)}</span>
+            </td>
+            <td data-label="Aksi">
+              <div class="acts">
+                <button class="btn ghost sm" data-act="edit" data-id="${e.id}" aria-label="Edit">${U.icon('edit')} Edit</button>
+                <button class="btn ghost sm del" data-act="del" data-id="${e.id}" aria-label="Hapus">${U.icon('trash')}</button>
+              </div>
+            </td>
+          </tr>
+        `;
       }).join('') +
       `</tbody><tfoot><tr><td colspan="4">Total upah karyawan operasional non-kurir${s ? '' : ' (belum ada omzet hari ini)'}</td><td class="n">${totalWage}</td><td></td></tr></tfoot>`;
   }

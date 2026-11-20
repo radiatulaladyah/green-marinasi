@@ -46,7 +46,8 @@ const Sales = {
     const s = this.byDate(d), f = $('sales-form'); if (!s) return;
     this.editing = d; f.date.value = d; f.date.readOnly = true; f.omzet.value = s.omzet; f.note.value = s.note || '';
     $('sf-title').textContent = 'Edit data ' + U.dmy(d); $('sf-cancel').hidden = false;
-    this.live(); scrollTo({ top: 0, behavior: 'smooth' });
+    this.live();
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
   remove(d) {
@@ -61,15 +62,41 @@ const Sales = {
   render() {
     const T = Store.get().settings.target, t = $('sales-table');
     const list = [...Store.get().sales].sort((a, b) => b.date.localeCompare(a.date));
-    if (!list.length) { t.innerHTML = '<tbody><tr><td class="empty">Belum ada data. Isi form untuk mencatat omzet pertama.</td></tr></tbody>'; return; }
-    t.innerHTML = '<thead><tr><th>Tanggal</th><th class="n">Omzet</th><th class="n">Capaian</th><th>Status</th><th>Catatan</th><th></th></tr></thead><tbody>' +
+    if (!list.length) {
+      t.innerHTML = '<tbody><tr><td class="empty">Belum ada data. Isi form untuk mencatat omzet makanan pertama.</td></tr></tbody>';
+      return;
+    }
+    t.innerHTML = '<thead><tr><th>Tanggal</th><th class="n">Omzet Makanan</th><th class="n">Capaian Target</th><th>Status</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>' +
       list.map(s => {
         const p = Salary.percent(s.omzet, T), st = Salary.status(p);
-        return `<tr><td>${U.dmy(s.date)}${Wage.lockOf(s.date) ? ` <span class="lk" title="Upah terkunci">${U.icon('lock')}</span>` : ''}</td>
-          <td class="n">${U.rp(s.omzet)}</td><td class="n">${U.pct(p)}</td><td><span class="chip ${st.key}">${st.label}</span></td>
-          <td>${U.esc(s.note)}</td>
-          <td><div class="acts"><button class="btn ghost sm" data-act="edit" data-d="${s.date}" aria-label="Edit">${U.icon('edit')}</button>
-          <button class="btn ghost sm del" data-act="del" data-d="${s.date}" aria-label="Hapus">${U.icon('trash')}</button></div></td></tr>`;
+        return `
+          <tr class="res-row">
+            <td data-label="Tanggal">
+              <span class="m-val">
+                <b>${U.dmy(s.date)}</b>
+                ${Wage.lockOf(s.date) ? ` <span class="lk" title="Upah terkunci">${U.icon('lock')}</span>` : ''}
+              </span>
+            </td>
+            <td class="n" data-label="Omzet Makanan">
+              <span class="m-val" style="font-weight:800;color:var(--g900)">${U.rp(s.omzet)}</span>
+            </td>
+            <td class="n" data-label="Capaian Target">
+              <span class="m-val">${U.pct(p)}</span>
+            </td>
+            <td data-label="Status">
+              <span class="m-val"><span class="chip ${st.key}">${st.label}</span></span>
+            </td>
+            <td data-label="Catatan">
+              <span class="m-val">${s.note ? U.esc(s.note) : '<span class="mut">—</span>'}</span>
+            </td>
+            <td data-label="Aksi">
+              <div class="acts">
+                <button class="btn ghost sm" data-act="edit" data-d="${s.date}" aria-label="Edit">${U.icon('edit')} Edit</button>
+                <button class="btn ghost sm del" data-act="del" data-d="${s.date}" aria-label="Hapus">${U.icon('trash')}</button>
+              </div>
+            </td>
+          </tr>
+        `;
       }).join('') + '</tbody>';
   }
 };
